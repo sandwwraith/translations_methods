@@ -2,12 +2,6 @@ package top.sandwwraith.mt.lab2v6
 
 import java.io.Writer
 
-/**
- * @author Leonid Startsev
- *		  sandwwraith@gmail.com
- * 		  ITMO University, 2017
- **/
-
 class TreePrinter(val tree: TreeNode, var name: String = "") {
 
     private lateinit var writer: Writer

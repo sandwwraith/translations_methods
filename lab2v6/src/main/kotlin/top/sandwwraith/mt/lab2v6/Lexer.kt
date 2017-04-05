@@ -4,42 +4,6 @@ import java.io.IOException
 import java.io.Reader
 import java.io.StringReader
 
-/**
- * @author Leonid Startsev
- *		  sandwwraith@gmail.com
- * 		  ITMO University, 2017
- **/
-
-class ParsingException(message: String = "Parse error", val pos: Int? = null,
-                       val expectedAndFound: Pair<List<Token>, Token>? = null)
-
-    : Exception(
-        buildString {
-            append(message)
-            if (pos != null) append(" at position $pos")
-            if (expectedAndFound != null) {
-                append(", expected tokens: ${expectedAndFound.first}, found: ${expectedAndFound.second}")
-            }
-        }
-) {
-    companion object {
-        fun createFromExpected(lexer: Lexer, vararg expected: Token) =
-                ParsingException(pos = lexer.position, expectedAndFound = (expected.asList() to lexer.token))
-    }
-}
-
-enum class Token {
-    ID, COMMA, SEMICOLON, ASTERISK, EOF;
-
-    override fun toString() = when(this) {
-        ID -> "<identifier>"
-        COMMA -> ","
-        SEMICOLON -> ";"
-        ASTERISK -> "*"
-        EOF -> "EOF"
-    }
-}
-
 class Lexer(private val reader: Reader) {
 
     constructor(line: String) : this(StringReader(line))
