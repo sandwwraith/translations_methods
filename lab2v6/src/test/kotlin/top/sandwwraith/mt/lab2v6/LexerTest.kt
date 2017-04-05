@@ -44,7 +44,7 @@ class LexerTest : StringSpec() {
                     row("int", listOf(Token.ID)),
                     row("  int    ", listOf(Token.ID)),
                     row("int a", listOf(Token.ID, Token.ID)),
-                    row("  int   a;", listOf(Token.ID, Token.ID, Token.SEMICOLON)),
+                    row("  int   a;\nbool b;", listOf(Token.ID, Token.ID, Token.SEMICOLON, Token.ID, Token.ID, Token.SEMICOLON)),
                     row("char *c;", listOf(Token.ID, Token.ASTERISK, Token.ID, Token.SEMICOLON)),
                     row("double a, **b;", listOf(Token.ID, Token.ID, Token.COMMA, Token.ASTERISK, Token.ASTERISK, Token.ID, Token.SEMICOLON)),
                     row("", listOf())
