@@ -29,7 +29,15 @@ class ParsingException(message: String = "Parse error", val pos: Int? = null,
 }
 
 enum class Token {
-    ID, COMMA, SEMICOLON, ASTERISK, EOF
+    ID, COMMA, SEMICOLON, ASTERISK, EOF;
+
+    override fun toString() = when(this) {
+        ID -> "<identifier>"
+        COMMA -> ","
+        SEMICOLON -> ";"
+        ASTERISK -> "*"
+        EOF -> "EOF"
+    }
 }
 
 class Lexer(private val reader: Reader) {

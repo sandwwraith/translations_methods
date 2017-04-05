@@ -6,7 +6,7 @@ package top.sandwwraith.mt.lab2v6
  * 		  ITMO University, 2017
  **/
 
-data class TreeNode(val name: String, val children: List<TreeNode>) {
+data class TreeNode(val name: String, val children: List<TreeNode>, val term: Boolean = false) {
     constructor(name: String, vararg children: TreeNode) : this(name, children.asList())
 }
 
@@ -18,7 +18,7 @@ fun TreeNode.takeTypes(): List<String> = when (this.name) {
     else -> throw IllegalArgumentException()
 }
 
-fun TreeNode.extractVars(): List<Pair<Int, String>> = when(this.name) {
+fun TreeNode.extractVars(): List<Pair<Int, String>> = when (this.name) {
     "V" -> {
         var depth = 0
         var c = this
@@ -36,7 +36,7 @@ class Parser(private val lexer: Lexer) {
     private fun skip(token: Token): TreeNode {
         if (lexer.token != token) throw ParsingException.createFromExpected(lexer, token)
         val lastId = lexer.lastId
-        val res = TreeNode(if (token == Token.ID && lastId != null) lastId else token.toString())
+        val res = TreeNode(if (token == Token.ID && lastId != null) lastId else token.toString(), listOf(), term = true)
         lexer.next()
         return res
     }
@@ -81,5 +81,9 @@ class Parser(private val lexer: Lexer) {
     fun parse(): TreeNode {
         lexer.next()
         return S()
+    }
+
+    companion object {
+        fun parse(s: String) = Parser(Lexer(s)).parse()
     }
 }
