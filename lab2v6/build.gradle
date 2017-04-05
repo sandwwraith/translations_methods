@@ -30,7 +30,6 @@ task fatJar(type: Jar) {
         attributes 'Implementation-Version': version,
                 'Main-Class': 'top.sandwwraith.mt.lab2v6.App'
     }
-    baseName = project.name + '-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
