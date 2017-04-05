@@ -1,9 +1,6 @@
 package top.sandwwraith.mt.lab2v6
 
-import io.kotlintest.matchers.Matcher
-import io.kotlintest.matchers.Result
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldThrow
+import io.kotlintest.matchers.*
 import io.kotlintest.properties.forAll
 import io.kotlintest.properties.headers
 import io.kotlintest.properties.row
@@ -60,9 +57,10 @@ class LexerTest : StringSpec() {
         }
 
         "Throw on illegal characters" {
-            shouldThrow<ParsingException> {
+            val e = shouldThrow<ParsingException> {
                 Lexer("  ab ^!!:").consume()
             }
+            e.pos shouldBe 5
         }
     }
 }

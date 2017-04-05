@@ -1,7 +1,7 @@
 package top.sandwwraith.mt.lab2v6
 
-import java.io.BufferedReader
 import java.io.IOException
+import java.io.Reader
 import java.io.StringReader
 
 /**
@@ -10,18 +10,31 @@ import java.io.StringReader
  * 		  ITMO University, 2017
  **/
 
-class ParsingException(message: String, val position: Int? = null, val expected: String? = null)
-    : Exception(message) {
-    //todo : Format message
+class ParsingException(message: String = "Parse error", val pos: Int? = null,
+                       val expectedAndFound: Pair<List<Token>, Token>? = null)
+
+    : Exception(
+        buildString {
+            append(message)
+            if (pos != null) append(" at position $pos")
+            if (expectedAndFound != null) {
+                append(", expected tokens: ${expectedAndFound.first}, found: ${expectedAndFound.second}")
+            }
+        }
+) {
+    companion object {
+        fun createFromExpected(lexer: Lexer, vararg expected: Token) =
+                ParsingException(pos = lexer.position, expectedAndFound = (expected.asList() to lexer.token))
+    }
 }
 
 enum class Token {
     ID, COMMA, SEMICOLON, ASTERISK, EOF
 }
 
-class Lexer(val reader: BufferedReader) {
+class Lexer(private val reader: Reader) {
 
-    constructor(line: String) : this(BufferedReader(StringReader(line)))
+    constructor(line: String) : this(StringReader(line))
 
     lateinit var token: Token
         private set
@@ -66,7 +79,7 @@ class Lexer(val reader: BufferedReader) {
             return
         }
 
-        when(cur) {
+        when (cur) {
             ','.toInt() -> {
                 token = Token.COMMA
                 read()
