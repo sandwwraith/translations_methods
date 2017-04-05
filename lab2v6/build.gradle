@@ -22,3 +22,17 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     testCompile 'io.kotlintest:kotlintest:2.0.0'
 }
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+    destinationDir = new File(project.buildDir, 'output')
+    manifest {
+        attributes 'Implementation-Version': version,
+                'Main-Class': 'top.sandwwraith.mt.lab2v6.App'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+defaultTasks 'clean', 'fatJar'
