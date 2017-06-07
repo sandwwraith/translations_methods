@@ -1,13 +1,14 @@
 package top.sandwwraith.mt.lab2v6
 
 enum class Token {
-    ID, COMMA, SEMICOLON, ASTERISK, EOF;
+    ID, COMMA, SEMICOLON, ASTERISK, AMP, EOF;
 
     override fun toString() = when (this) {
         ID -> "<identifier>"
         COMMA -> ","
         SEMICOLON -> ";"
         ASTERISK -> "*"
+        AMP -> "&"
         EOF -> "EOF"
     }
 }
@@ -25,6 +26,11 @@ data class TreeNode(val name: String, val children: List<TreeNode>, val term: Bo
 
     fun extractVars(): List<Pair<Int, String>> = when (this.name) {
         "V" -> {
+            if (children.size == 1) listOf(children[0].children[0].name)
+            if (children.size == 2 && children[0].name == "&") listOf(children[1].children[0].name)
+            children[1].extractVars()
+        }
+        "X" -> {
             var depth = 0
             var c = this
             while (c.children.size == 2) {

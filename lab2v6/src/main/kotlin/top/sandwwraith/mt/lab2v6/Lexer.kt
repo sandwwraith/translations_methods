@@ -67,6 +67,11 @@ class Lexer(private val reader: Reader) {
                 read()
             }
 
+            '&'.toInt() -> {
+                token = Token.AMP
+                read()
+            }
+
             -1 -> {
                 token = Token.EOF
             }

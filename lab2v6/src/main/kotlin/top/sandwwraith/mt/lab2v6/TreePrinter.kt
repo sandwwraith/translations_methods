@@ -28,7 +28,8 @@ class TreePrinter(val tree: TreeNode, var name: String = "") {
     }
 
     private fun printNodeName(cur: TreeNode) {
-        val attrs = mutableMapOf("label" to "\"${cur.name}\"")
+        val name = if (cur.name == "&") "&amp;" else cur.name
+        val attrs = mutableMapOf("label" to "\"$name\"")
         if (cur.term) {
             attrs["color"] = "red"
             attrs["label"] = "< <B>${attrs["label"]!!.replace("\"", "")}</B> >"

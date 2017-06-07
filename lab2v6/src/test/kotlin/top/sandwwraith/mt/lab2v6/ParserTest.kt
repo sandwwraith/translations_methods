@@ -50,5 +50,24 @@ class ParserTest : ShouldSpec() {
                 shouldThrow<ParsingException> { Parser(Lexer("char ***xxx")).parse() }
             }
         }
+
+        val testString3 = "int &a, **b;double x;char ***C;"
+        "Parsing '$testString3'" {
+            val tree = Parser(Lexer(testString3)).parse()
+            should("have three types: int, double, char") {
+                val types = tree.takeTypes()
+                types shouldBe listOf("int", "double", "char")
+            }
+            should("have all variables") {
+                val vars = tree.extractVars()
+                vars should haveSize(4)
+                vars shouldBe listOf(1 to "a", 2 to "b", 0 to "x", 3 to "C")
+            }
+            should("not allow amps") {
+                shouldThrow<ParsingException> { Parser(Lexer("int &&k;")).parse()  }
+                shouldThrow<ParsingException> { Parser(Lexer("int &*k;")).parse()  }
+                shouldThrow<ParsingException> { Parser(Lexer("int &;")).parse()  }
+            }
+        }
     }
 }

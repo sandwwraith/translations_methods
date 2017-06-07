@@ -12,10 +12,17 @@ class Parser(private val lexer: Lexer) {
 
     private fun N() = TreeNode("N", skip(Token.ID))
 
-    private fun V(): TreeNode = when (lexer.token) {
-        Token.ASTERISK -> TreeNode("V", skip(Token.ASTERISK), V())
-        Token.ID -> TreeNode("V", N())
+    private fun X(): TreeNode = when(lexer.token) {
+        Token.ASTERISK -> TreeNode("X", skip(Token.ASTERISK), X())
+        Token.ID -> TreeNode("X", N())
         else -> throw ParsingException.expectedNotFound(lexer, Token.ID, Token.ASTERISK)
+    }
+
+    private fun V(): TreeNode = when (lexer.token) {
+        Token.ASTERISK -> TreeNode("V", skip(Token.ASTERISK), X())
+        Token.ID -> TreeNode("V", N())
+        Token.AMP -> TreeNode("V", skip(Token.AMP), N())
+        else -> throw ParsingException.expectedNotFound(lexer, Token.ID, Token.ASTERISK, Token.AMP)
     }
 
     private fun Ws(): TreeNode = when (lexer.token) {
@@ -25,8 +32,8 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun W() = when (lexer.token) {
-        Token.ASTERISK, Token.ID -> TreeNode("W", V(), Ws())
-        else -> throw ParsingException.expectedNotFound(lexer, Token.ID, Token.ASTERISK)
+        Token.ASTERISK, Token.ID, Token.AMP -> TreeNode("W", V(), Ws())
+        else -> throw ParsingException.expectedNotFound(lexer, Token.ID, Token.ASTERISK, Token.AMP)
     }
 
     private fun T() = TreeNode("T", skip(Token.ID))
