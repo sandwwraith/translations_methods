@@ -1,4 +1,11 @@
+apply plugin: 'antlr'
+
 dependencies {
+    antlr 'org.antlr:antlr4:4.7'
 }
 
 mainClassName = 'top.sandwwraith.mt.lab3v7.App'
+
+generateGrammarSource {
+    arguments += ["-visitor", "-package", "top.sandwwraith.mt.lab3v7"]
+}
