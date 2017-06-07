@@ -1,2 +1,4 @@
 dependencies {
 }
+
+mainClassName = 'top.sandwwraith.mt.lab3v7.App'

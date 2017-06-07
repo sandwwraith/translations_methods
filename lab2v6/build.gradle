@@ -13,4 +13,6 @@ task fatJar(type: Jar) {
     with jar
 }
 
+mainClassName = 'top.sandwwraith.mt.lab2v6.App'
+
 defaultTasks 'clean', 'fatJar'
