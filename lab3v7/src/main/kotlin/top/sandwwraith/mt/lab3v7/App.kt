@@ -38,6 +38,7 @@ class RatNumTranspiler : RatNumsBaseVisitor<String>() {
         get() = contextStack.last()
 
     private val SUBST_TYPE = "mpq_t"
+    private val RETURN_PARAM = "_out_param"
     private val HEADER = """#include <gmp.h>
 #include <stdio.h>
 
@@ -56,11 +57,11 @@ class RatNumTranspiler : RatNumsBaseVisitor<String>() {
     }
 
     object builtins {
-        operator fun contains(f: String) = f in setOf("print", "read")
+        operator fun contains(f: String) = f in setOf("<<", ">>")
 
-        operator fun get(f: String, arg: String) = when(f) {
-            "print" -> "mpq_out_str(stdout, 10, $arg);"
-            "read" -> "mpq_inp_str($arg, stdin, 10);\nmpq_canonicalize($arg);"
+        operator fun get(f: String, arg: String, indent: Int = 0) = when (f) {
+            "<<" -> "mpq_out_str(stdout, 10, $arg);"
+            ">>" -> "mpq_inp_str($arg, stdin, 10);\n${" ".repeat(4 * indent)}mpq_canonicalize($arg);"
             else -> throw IllegalArgumentException("No such built-in function")
         }
     }
@@ -69,20 +70,28 @@ class RatNumTranspiler : RatNumsBaseVisitor<String>() {
         return (aggregate ?: "") + (nextResult ?: "")
     }
 
+    private fun buildFuncSignature(funcName: String, args: List<String>): String {
+        val argl = (args.asSequence() + RETURN_PARAM).map { "$SUBST_TYPE $it" }
+        return "$SUBST_TYPE $funcName(${argl.joinToString()})"
+    }
+
     override fun visitProgram(ctx: RatNumsParser.ProgramContext) = buildString {
         al(HEADER)
-        ctx.topLevels().forEach {
-            append(visitTopLevels(it))
+        ctx.func().forEach {
+            append(visitFunc(it))
             al("")
+        }
+        ctx.main()?.let {
+            append(visitMain(it))
         }
     }
 
     override fun visitFunc(ctx: RatNumsParser.FuncContext) = buildString {
-        val name = ctx.ID(0)
-        val args = ctx.ID().subList(1, ctx.ID().size).map { "$SUBST_TYPE $it" }
-        al("$SUBST_TYPE $name(${args.joinToString()}) {")
+        val name = ctx.ID(0).toString()
+        val args = ctx.ID().subList(1, ctx.ID().size).map { it.toString() }
+        al("${buildFuncSignature(name, args)} {")
         newScope {
-            append(visitLines(ctx.lines()))
+            ctx.lines()?.let { append(visitLines(it)) }
             append(visitRet(ctx.ret()))
             append(deallocateVars(curContext))
         }
@@ -108,19 +117,31 @@ class RatNumTranspiler : RatNumsBaseVisitor<String>() {
         val txt = visitArithm(ctx.arithm())
         append(txt)
         val resultVar = curContext.popStack()
-        al("return $resultVar")
-        curContext.allocated.remove(resultVar) // don't clear var on return
+        al("mpq_set($RETURN_PARAM, $resultVar);")
+    }
+
+    override fun visitExt_call(ctx: RatNumsParser.Ext_callContext) = buildString {
+        al(ctx.text + ";")
     }
 
     override fun visitCall(ctx: RatNumsParser.CallContext) = buildString {
-        val funName = ctx.ID(0).text
-        if (funName in builtins) {
-            val arg = ctx.ID(1).text
-            if (ctx.ID().size != 2) println("WARNING: you can use only one argument in 'print' or 'read'.")
-            al(builtins[funName, arg])
-        } else {
-            al(ctx.text + ";")
-        }
+        val funName = ctx.ID(0).toString()
+        val args = ctx.ID().subList(1, ctx.ID().size - 1).map { it.toString() }
+        val outParam = ctx.ID().last().toString()
+        checkVar(outParam)
+        al("$funName(${if (args.isNotEmpty()) args.joinToString(postfix = ", ") else ""}$outParam);")
+    }
+
+    private fun StringBuilder.checkVar(v: String) {
+        if (v !in curContext.allocated) append(introduceVariable(v))
+    }
+
+    override fun visitIo(ctx: RatNumsParser.IoContext) = buildString {
+        val dir = ctx.getChild(0).text
+        ctx.ID().asSequence()
+                .map { it.toString() }
+                .onEach { checkVar(it) }
+                .forEach { al(builtins[dir, it, indent]) }
     }
 
     override fun visitDef(ctx: RatNumsParser.DefContext): String {
@@ -130,8 +151,7 @@ class RatNumTranspiler : RatNumsBaseVisitor<String>() {
 
     override fun visitAssign(ctx: RatNumsParser.AssignContext) = buildString {
         val varname = ctx.ID().toString()
-        if (varname !in curContext.allocated) append(introduceVariable(varname))
-
+        checkVar(varname)
         val txt = visitArithm(ctx.arithm())
         // expression
         append(txt)
@@ -247,7 +267,7 @@ class Context(initCounter: Int = 0) {
 
 
 fun main(args: Array<String>) {
-    val lexer = RatNumsLexer(CharStreams.fromString("main {g = (2+3) * -4 print(g)}"))
+    val lexer = RatNumsLexer(CharStreams.fromString("fun g() {ret 10} main {>> x i g() -> i y = (x+i) << y}"))
     val parser = RatNumsParser(CommonTokenStream(lexer))
     val trans = RatNumTranspiler()
     println(trans.visit(parser.program()))
