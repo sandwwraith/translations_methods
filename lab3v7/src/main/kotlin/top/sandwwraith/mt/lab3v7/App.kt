@@ -2,9 +2,13 @@
 
 package top.sandwwraith.mt.lab3v7
 
+import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.TerminalNode
+import java.nio.file.Files
+import java.nio.file.Paths
+
 
 /**
  * @author Leonid Startsev
@@ -265,10 +269,59 @@ class Context(initCounter: Int = 0) {
     fun stackIsEmpty() = exprStack.isEmpty()
 }
 
+sealed class CompilerResult {
+    class Success(val result: String) : CompilerResult()
+
+    class Error(val errors: List<String>) : CompilerResult()
+}
+
+private fun compile(stream: CharStream): CompilerResult {
+    val collector = ErrorCollector()
+    val lexer = RatNumsLexer(stream).apply {
+        removeErrorListeners()
+        addErrorListener(collector)
+    }
+
+    val parser = RatNumsParser(CommonTokenStream(lexer)).apply {
+        removeErrorListeners()
+        addErrorListener(collector)
+    }
+
+    val trans = RatNumTranspiler()
+
+    try {
+        val result = trans.visit(parser.program())
+        if (collector.hasErrors())
+            return CompilerResult.Error(collector.getErrors())
+        else
+            return CompilerResult.Success(result)
+    } catch (e: Exception) {
+        e.message?.let { collector.addError(it) }
+        return CompilerResult.Error(collector.getErrors())
+    }
+}
 
 fun main(args: Array<String>) {
-    val lexer = RatNumsLexer(CharStreams.fromString("fun g() {ret 10} main {>> x i g() -> i y = (x+i) << y}"))
-    val parser = RatNumsParser(CommonTokenStream(lexer))
-    val trans = RatNumTranspiler()
-    println(trans.visit(parser.program()))
+    if (args.isEmpty()) {
+        println("You should specify at least one file as command line argument")
+        return
+    }
+    val fileExt = ".rn"
+    for (fName in args) {
+        val i = fName.indexOf(fileExt)
+        if (i == -1 || !fName.endsWith(fileExt)) {
+            System.err.println("Skipping $fName, not an $fileExt file.")
+            continue
+        }
+        val fout = fName.substring(0, i)
+        val res = compile(CharStreams.fromFileName(fName, Charsets.UTF_8))
+        when (res) {
+            is CompilerResult.Success -> Files.newBufferedWriter(Paths.get("$fout.c"), Charsets.UTF_8)
+                    .use { it.write(res.result) }
+            is CompilerResult.Error -> {
+                val prefix = "Following errors occurred during compilation of $fName:\n"
+                System.err.println(res.errors.joinToString(prefix = prefix, separator = "\n"))
+            }
+        }
+    }
 }
