@@ -24,3 +24,5 @@ subprojects {
         compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     }
 }
+
+defaultTasks 'clean', 'lab3v7:generateGrammarSource', 'installDist'
