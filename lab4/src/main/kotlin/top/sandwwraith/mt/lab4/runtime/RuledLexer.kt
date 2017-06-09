@@ -11,11 +11,11 @@ import java.io.Reader
 
 typealias Token = Int
 
-class RuledLexer(_reader: Reader,
-                 literals: Map<Token, String>,
-                 patterns: Map<Token, Regex>,
-                 private val tokensToSkip: Set<Token>,
-                 private val EOF_TOKEN: Token = -1) {
+open class RuledLexer(_reader: Reader,
+                      literals: Map<Token, String>,
+                      patterns: Map<Token, Regex>,
+                      private val tokensToSkip: Set<Token>,
+                      private val EOF_TOKEN: Token = -1) {
 
     private val tokens: Map<Token, Regex> = patterns + literals.mapValues { (_, v) -> Regex.fromLiteral(v) }
     private val reader = PushbackReader(_reader)

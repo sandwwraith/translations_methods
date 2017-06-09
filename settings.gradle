@@ -1,3 +1,4 @@
+rootProject.name = 'mt'
 include 'lab2v6'
 include 'lab3v7'
 include 'lab4'
