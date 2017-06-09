@@ -1,0 +1,13 @@
+apply plugin: 'antlr'
+
+dependencies {
+    antlr 'org.antlr:antlr4:4.7'
+
+    testCompile 'io.kotlintest:kotlintest:2.0.3'
+}
+
+mainClassName = 'top.sandwwraith.mt.lab4.App'
+
+generateGrammarSource {
+    arguments += ["-visitor", "-package", "top.sandwwraith.mt.lab4"]
+}
