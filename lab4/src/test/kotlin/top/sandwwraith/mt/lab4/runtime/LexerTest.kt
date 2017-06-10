@@ -3,7 +3,9 @@ package top.sandwwraith.mt.lab4.runtime
 import io.kotlintest.matchers.Matcher
 import io.kotlintest.matchers.Result
 import io.kotlintest.matchers.should
+import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.ShouldSpec
+import org.antlr.v4.runtime.CharStreams
 import java.io.StringReader
 
 /**
@@ -39,16 +41,26 @@ private fun haveText(text: List<String?>) = object : Matcher<Lexer> {
 }
 
 
-class RuledLexerTest : ShouldSpec() {
+class LexerTest : ShouldSpec() {
     init {
         "Lexer for IDs and semicolons" {
+            val gram = """WS => '\s+' ID = '[a-z]+' SC = ";" """
             val patterns = mapOf(0 to Regex("\\s+"), 1 to Regex("[a-z]+"))
             val literals = mapOf(2 to ";")
             val tokensToSkip = setOf(0)
-            val tokenize: (String) -> RuledLexer = { s -> RuledLexer(StringReader(s), literals, patterns, tokensToSkip) }
-            should("Parse 'int a;'") {
-                tokenize("int a;") should haveTokens(1, 1, 2, -1)
-                tokenize("int a; ") should haveText("int", "a", ";", null)
+
+            val builder = LexerBuilder(CharStreams.fromString(gram))
+            should("build correct tables") {
+                builder.patterns.mapValues { (_, v) -> v.toString() } shouldEqual patterns.mapValues { (_, v) -> v.toString() }
+                builder.literals shouldEqual literals
+                builder.tokenToSkip shouldEqual tokensToSkip
+            }
+            val lexer = RuledLexer(StringReader("int a;"), literals, patterns, tokensToSkip)
+            should("tokenize 'int a;'") {
+                lexer should haveTokens(1, 1, 2, -1)
+            }
+            should("get literal values from 'int a;'") {
+                lexer should haveText("int", "a", ";", null)
             }
         }
     }
