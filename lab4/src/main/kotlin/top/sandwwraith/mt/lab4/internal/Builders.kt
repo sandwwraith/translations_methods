@@ -247,7 +247,7 @@ internal class LexerGrammarFilesGenerator(val collector: GrammarCollector) : Abs
         }
         l("import java.io.Reader")
         l("import top.sandwwraith.mt.lab4.runtime.Token")
-        l("import top.sandwwraith.mt.lab4.runtime.RuledLexer")
+        l("import top.sandwwraith.mt.lab4.runtime.GroupMatcherLexer")
         nl
         l("private val _literals: Map<Token, String> = mapOf(")
         scoped { literals.forEach { t, s -> l("$t to \"${s.escape()}\",") } }
@@ -266,7 +266,7 @@ internal class LexerGrammarFilesGenerator(val collector: GrammarCollector) : Abs
         l("}")
         nl
         l("class ${grammarName.capitalize()}Lexer(reader: Reader)")
-        scoped { l(": RuledLexer(reader, _literals, _patterns, _tokensToSkip, TOKENS.EOF)") }
+        scoped { l(": GroupMatcherLexer(reader, _literals, _patterns, _tokensToSkip, TOKENS.EOF)") }
     }
 
     private fun String.escape() = replace("\\", "\\\\").replace("\"", "\\\"")

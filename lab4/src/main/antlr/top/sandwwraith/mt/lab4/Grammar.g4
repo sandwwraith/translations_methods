@@ -22,7 +22,7 @@ outAttr: T_ID;
 prods: prod*;
 prod: NT_ID args? | T_ID | CODE;
 args: '(' arg (',' arg)* ')';
-arg : NT_ID | CODE;
+arg : NT_ID | T_ID | CODE;
 
 lexerRule
 	: T_ID '=' term_value  # tokenRule
@@ -34,7 +34,7 @@ term_value
 	| STRING
 	;
 
-NT_ID : [a-z][a-z0-9]*;
+NT_ID : [a-z][a-zA-Z0-9]*;
 T_ID : [A-Z][a-zA-Z0-9]*;
 
 REGEX : '\'' (~('\''|'\r' | '\n') | '\\\'')* '\'';

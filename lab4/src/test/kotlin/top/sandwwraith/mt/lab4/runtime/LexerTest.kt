@@ -20,7 +20,7 @@ import java.io.StringReader
  * 		  ITMO University, 2017
  **/
 
-typealias Lexer = RuledLexer
+typealias Lexer = GroupMatcherLexer
 
 private fun haveTokens(vararg tokens: Token) = haveTokens(tokens.toList())
 
@@ -70,7 +70,7 @@ class LexerTest : ShouldSpec() {
                 builder.literals shouldEqual literals
                 builder.tokensToSkip shouldEqual tokensToSkip
             }
-            val lexer = RuledLexer(StringReader("int a;"), literals, patterns, tokensToSkip)
+            val lexer = Lexer(StringReader("int a;"), literals, patterns, tokensToSkip)
             should("tokenize 'int a;'") {
                 lexer should haveTokens(1, 1, 2, -1)
             }

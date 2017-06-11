@@ -13,7 +13,7 @@ class ParsingException(message: String = "Parse error", val pos: Int? = null,
         }
 ) {
     companion object {
-        fun expectedNotFound(lexer: RuledLexer, vararg expected: Token) =
+        fun expectedNotFound(lexer: GroupMatcherLexer, vararg expected: Token) =
                 ParsingException(pos = lexer.position, expectedAndFound = (expected.asList() to lexer.token))
     }
 }
