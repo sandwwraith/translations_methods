@@ -3,7 +3,7 @@ package top.sandwwraith.mt.lab4.internal
 import top.sandwwraith.mt.lab4.runtime.ParsingException
 import top.sandwwraith.mt.lab4.runtime.Token
 
-abstract class BuilderHelper {
+abstract class AbstractGrammarFilesGenerator {
 
     protected var indent = 0
 
@@ -30,9 +30,27 @@ abstract class BuilderHelper {
         while (this[i].isWhitespace() && i >= 0) i--
         if (i >= 0) deleteCharAt(i)
     }
+
+    abstract fun generate(grammarName: String): String
 }
 
-internal class ParserBuilder(val collector: GrammarCollector) : BuilderHelper() {
+internal class TestGrammarFilesGenerator(val collector: GrammarCollector) : AbstractGrammarFilesGenerator() {
+    override fun generate(grammarName: String) = buildString {
+        val gn = grammarName.capitalize()
+        collector.pckg?.let {
+            l("package $it")
+            nl
+        }
+        l("fun main(args: Array<String>) {")
+        scoped {
+            l("println(${gn}Parser(${gn}Lexer(args[0].reader())).parse())")
+        }
+        l("}")
+    }
+
+}
+
+internal class ParserGrammarFilesGenerator(val collector: GrammarCollector) : AbstractGrammarFilesGenerator() {
 
     val first: Map<String, Set<String>> by lazy {
         val fst: MutableMap<String, MutableSet<String>> = mutableMapOf()
@@ -100,7 +118,7 @@ internal class ParserBuilder(val collector: GrammarCollector) : BuilderHelper() 
         flw
     }
 
-    fun generateParserCode(grammarName: String) = buildString {
+    override fun generate(grammarName: String) = buildString {
         val gn = grammarName.capitalize()
         collector.pckg?.let {
             l("package $it")
@@ -204,7 +222,7 @@ internal class ParserBuilder(val collector: GrammarCollector) : BuilderHelper() 
     private fun Rule.getArgs() = args?.map { (n, t) -> "$n: $t" }?.joinToString().orEmpty()
 }
 
-internal class LexerBuilder(val collector: GrammarCollector) : BuilderHelper() {
+internal class LexerGrammarFilesGenerator(val collector: GrammarCollector) : AbstractGrammarFilesGenerator() {
 
     val tokensToSkip: Set<Token>
         get() = collector._tokensToSkip
@@ -218,7 +236,7 @@ internal class LexerBuilder(val collector: GrammarCollector) : BuilderHelper() {
     val tokenTable: Map<String, Token>
         get() = collector._tokenTable
 
-    fun generateLexerCode(grammarName: String) = buildString {
+    override fun generate(grammarName: String) = buildString {
         collector.pckg?.let {
             l("package $it")
             nl

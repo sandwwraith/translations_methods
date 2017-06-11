@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker
 import top.sandwwraith.mt.lab4.GrammarLexer
 import top.sandwwraith.mt.lab4.GrammarParser
 import top.sandwwraith.mt.lab4.internal.GrammarCollector
-import top.sandwwraith.mt.lab4.internal.LexerBuilder
+import top.sandwwraith.mt.lab4.internal.LexerGrammarFilesGenerator
 import java.io.StringReader
 
 /**
@@ -64,7 +64,7 @@ class LexerTest : ShouldSpec() {
             val literals = mapOf(2 to ";")
             val tokensToSkip = setOf(0)
 
-            val builder = LexerBuilder(visitGrammar(gram))
+            val builder = LexerGrammarFilesGenerator(visitGrammar(gram))
             should("build correct tables") {
                 builder.patterns.mapValues { (_, v) -> v.toString() } shouldEqual patterns.mapValues { (_, v) -> v.toString() }
                 builder.literals shouldEqual literals
