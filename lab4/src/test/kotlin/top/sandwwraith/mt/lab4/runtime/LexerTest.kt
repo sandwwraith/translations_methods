@@ -6,6 +6,7 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.ShouldSpec
 import org.antlr.v4.runtime.CharStreams
+import top.sandwwraith.mt.lab4.LexerBuilder
 import java.io.StringReader
 
 /**

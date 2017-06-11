@@ -1,26 +1,46 @@
 grammar Grammar;
 
-/*file : package? members? rule*;
+file : pckg? members? (begin rulee+)? EOF;
 
-package : '$package' PKG_NAME;
-members : '$members' CODE;
+begin: '|>' NT_ID;
+pckg : '+package' PKG_NAME;
+members : '+members' CODE;
 
-rule : parserRule ';' | lexerRule ';';
-parserRule : NT_ID inAttrs? (':' outAttr)? ':=' nt_prod ('|' nt_prod)*;*/
+rulee
+	: parserRulee ';'
+	| lexerRule ';'
+	;
 
-file: lexerRule*;
+parserRulee : NT_ID inAttrs? (':' outAttr)? ':=' prods ('|' prods)*;
+
+inAttrs : '<' param (',' param)* '>';
+param : paramName ':' paramType;
+paramType : T_ID;
+paramName : NT_ID;
+outAttr: T_ID;
+
+prods: prod* CODE?;
+prod: NT_ID args? | T_ID;
+args: '(' CODE (',' CODE)* ')';
+
 
 lexerRule
 	: T_ID '=' term_value  # tokenRule
-	| T_ID '=>' term_value # skipRule;
+	| T_ID '=>' term_value # skipRule
+	;
 
 term_value
 	: REGEX
 	| STRING
 	;
 
-T_ID : [A-Z][A-Z0-9]*;
+NT_ID : [a-z][a-z0-9]*;
+T_ID : [A-Z][a-zA-Z0-9]*;
+
 REGEX : '\'' (~('\''|'\r' | '\n') | '\\\'')* '\'';
 STRING : '"' (~('"') | '\\"')* '"';
+
+CODE : '{' (~[{}]+ CODE?)* '}' ;
+PKG_NAME : ([a-z] | '.')+;
 
 WS  : [ \t\r\n]+ -> skip ;
