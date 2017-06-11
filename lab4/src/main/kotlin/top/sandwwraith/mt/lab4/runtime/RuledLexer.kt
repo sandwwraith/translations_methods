@@ -62,6 +62,7 @@ open class RuledLexer(_reader: Reader,
         val possible = tokens.keys.toMutableSet()
         var first = true
 
+        // todo: normal lexer
         while (possible.isNotEmpty()) {
             token = possible.first()
             if (cur == -1) break

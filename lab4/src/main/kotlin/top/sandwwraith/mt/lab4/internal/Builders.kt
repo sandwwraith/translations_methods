@@ -1,10 +1,11 @@
 package top.sandwwraith.mt.lab4.internal
 
+import top.sandwwraith.mt.lab4.runtime.ParsingException
 import top.sandwwraith.mt.lab4.runtime.Token
 
 abstract class BuilderHelper {
 
-    private var indent = 0
+    protected var indent = 0
 
     protected fun StringBuilder.l(line: String) {
         for (i in 0 until (4 * indent)) append(" ")
@@ -18,7 +19,7 @@ abstract class BuilderHelper {
             Unit
         }
 
-    protected fun scoped(block: () -> Unit) {
+    protected inline fun scoped(block: () -> Unit) {
         indent++
         block()
         indent--
@@ -31,7 +32,7 @@ abstract class BuilderHelper {
     }
 }
 
-internal class ParserBuilder(val collector: GrammarCollector) {
+internal class ParserBuilder(val collector: GrammarCollector) : BuilderHelper() {
 
     val first: Map<String, Set<String>> by lazy {
         val fst: MutableMap<String, MutableSet<String>> = mutableMapOf()
@@ -98,6 +99,109 @@ internal class ParserBuilder(val collector: GrammarCollector) {
         }
         flw
     }
+
+    fun generateParserCode(grammarName: String) = buildString {
+        val gn = grammarName.capitalize()
+        collector.pckg?.let {
+            l("package $it")
+            nl
+        }
+        l("import top.sandwwraith.mt.lab4.runtime.Token")
+        l("import top.sandwwraith.mt.lab4.runtime.ParsingException")
+        nl
+        l("class ${gn}Parser(private val lexer: ${gn}Lexer) {")
+        nl
+        scoped {
+            l("private fun skip(token: Token): String {")
+            scoped {
+                l("if (lexer.token != token) throw ParsingException.expectedNotFound(lexer, token)")
+                l("val res = lexer.tokenValue ?: throw IllegalArgumentException(\"Cannot skip EOF token\")")
+                l("lexer.next()")
+                l("return res")
+            }
+            l("}")
+            nl
+            for ((name, rule) in collector._rules) {
+                l("private fun ${name.capitalize()}(${rule.getArgs()}) : ${rule.returnType ?: "Unit"} = when(lexer.token) {")
+                val m = mapRules(name, rule)
+                scoped { ->
+                    for ((prod, tokens) in m) {
+                        // Tokens
+                        l("${tokens.map { "TOKENS.$it" }.joinToString()} -> {")
+                        scoped {
+                            // Declarations
+                            val lst = listable(prod)
+                            lst.forEach({ (e, _) ->
+                                when (e) {
+                                    in collector.terms -> l("val $e : MutableList<String> = mutableListOf()")
+                                    in collector.nonTerms -> {
+                                        val returnType = collector._rules[e]!!.returnType
+                                        if (returnType != null)
+                                            l("val $e : MutableList<$returnType> = mutableListOf()")
+                                    }
+                                }
+                            })
+
+                            // Assignments
+                            for (elem in prod) {
+                                when (elem) {
+                                    is ProdElem.Term -> {
+                                        if (elem.name in lst)
+                                            l("${elem.name}.add(skip(TOKENS.${elem.name}))")
+                                        else
+                                            l("val ${elem.name} = skip(TOKENS.${elem.name})")
+                                    }
+                                    is ProdElem.NonTerm -> {
+                                        val callAttrs = elem.callAttrs?.joinToString().orEmpty()
+                                        if (elem.name in lst)
+                                            l("${elem.name}.add(${elem.name.capitalize()}($callAttrs))")
+                                        else
+                                            l("val ${elem.name} = ${elem.name.capitalize()}($callAttrs)")
+                                    }
+                                }
+                            }
+
+                            // Return code
+                            if (prod.code != null) l(prod.code)
+                        }
+                        l("}")
+                    }
+
+                    // else (error)
+                    l("else -> throw ParsingException.expectedNotFound(lexer, " +
+                            "${m.values.flatten().map { "TOKENS.$it" }.joinToString()})")
+                }
+                l("}")
+                nl
+            }
+            val startRule = collector._rules.getValue(collector.startNT)
+
+            l("fun parse(${startRule.getArgs()}) : ${startRule.returnType ?: "Unit"} { ")
+            scoped {
+                l("lexer.next()")
+                l("return ${collector.startNT.capitalize()}(${startRule.args?.map { (a, _) -> a }?.joinToString().orEmpty()})")
+            }
+            l("}")
+        }
+        l("}")
+    }
+
+    private fun mapRules(name: String, rule: Rule) = rule.productions
+            .associate { prod ->
+                if (prod[0].name == EPS) prod to follow.getValue(name).toList()
+                else prod to first.getValue(prod[0].name).toList()
+            }
+            .also {
+                it.values.flatten().also {
+                    if (it.size != it.distinct().size) throw ParsingException("It is not an LL(1) grammar!")
+                }
+            }
+
+    private fun listable(prod: Production) =
+            prod.asSequence().groupingBy { it.name }.eachCount().filterValues { i -> i > 1 }
+
+
+    private fun Rule.getArgs() = args?.map { (n, t) -> "$n: $t" }?.joinToString().orEmpty()
 }
 
 internal class LexerBuilder(val collector: GrammarCollector) : BuilderHelper() {
@@ -114,7 +218,7 @@ internal class LexerBuilder(val collector: GrammarCollector) : BuilderHelper() {
     val tokenTable: Map<String, Token>
         get() = collector._tokenTable
 
-    fun generateLexerData(grammarName: String) = buildString {
+    fun generateLexerCode(grammarName: String) = buildString {
         collector.pckg?.let {
             l("package $it")
             nl
