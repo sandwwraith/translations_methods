@@ -19,10 +19,10 @@ paramType : T_ID;
 paramName : NT_ID;
 outAttr: T_ID;
 
-prods: prod* CODE?;
-prod: NT_ID args? | T_ID;
-args: '(' CODE (',' CODE)* ')';
-
+prods: prod*;
+prod: NT_ID args? | T_ID | CODE;
+args: '(' arg (',' arg)* ')';
+arg : NT_ID | CODE;
 
 lexerRule
 	: T_ID '=' term_value  # tokenRule

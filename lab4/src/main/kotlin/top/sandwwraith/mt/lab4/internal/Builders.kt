@@ -161,26 +161,30 @@ internal class ParserGrammarFilesGenerator(val collector: GrammarCollector) : Ab
                             })
 
                             // Assignments
-                            for (elem in prod) {
-                                when (elem) {
-                                    is ProdElem.Term -> {
-                                        if (elem.name in lst)
-                                            l("${elem.name}.add(skip(TOKENS.${elem.name}))")
-                                        else
-                                            l("val ${elem.name} = skip(TOKENS.${elem.name})")
+                            products@ for (exElem in prod.native) {
+                                when (exElem) {
+                                    is ExtendedElem.Casual -> {
+                                        val elem = exElem.elem
+                                        when (elem) {
+                                            is ProdElem.Term -> {
+                                                if (elem.name == EPS) continue@products
+                                                if (elem.name in lst)
+                                                    l("${elem.name}.add(skip(TOKENS.${elem.name}))")
+                                                else
+                                                    l("val ${elem.name} = skip(TOKENS.${elem.name})")
+                                            }
+                                            is ProdElem.NonTerm -> {
+                                                val callAttrs = elem.callAttrs?.joinToString().orEmpty()
+                                                if (elem.name in lst)
+                                                    l("${elem.name}.add(${elem.name.capitalize()}($callAttrs))")
+                                                else
+                                                    l("val ${elem.name} = ${elem.name.capitalize()}($callAttrs)")
+                                            }
+                                        }
                                     }
-                                    is ProdElem.NonTerm -> {
-                                        val callAttrs = elem.callAttrs?.joinToString().orEmpty()
-                                        if (elem.name in lst)
-                                            l("${elem.name}.add(${elem.name.capitalize()}($callAttrs))")
-                                        else
-                                            l("val ${elem.name} = ${elem.name.capitalize()}($callAttrs)")
-                                    }
+                                    is ExtendedElem.Code -> l(exElem.code)
                                 }
                             }
-
-                            // Return code
-                            if (prod.code != null) l(prod.code)
                         }
                         l("}")
                     }

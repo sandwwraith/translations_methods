@@ -16,11 +16,16 @@ internal data class Rule(
         var args: List<Pair<String, String>>? = null
 )
 
-internal data class Production(val prods: List<ProdElem>, val code: String? = null) : List<ProdElem> by prods
+internal data class Production(val prods: List<ProdElem>, val native: List<ExtendedElem>) : List<ProdElem> by prods
 
 internal sealed class ProdElem {
     abstract val name: String
 
     data class Term(override val name: String) : ProdElem()
     data class NonTerm(override val name: String, val callAttrs: List<String>?) : ProdElem()
+}
+
+internal sealed class ExtendedElem {
+    data class Casual(val elem: ProdElem) : ExtendedElem()
+    data class Code(val code: String) : ExtendedElem()
 }

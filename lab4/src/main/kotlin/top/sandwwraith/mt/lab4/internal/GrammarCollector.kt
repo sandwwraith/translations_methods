@@ -58,22 +58,29 @@ internal class GrammarCollector : GrammarBaseListener() {
             curRule.args = ctx.inAttrs().param().map { it.paramName().text to it.paramType().text }
 
         curRule.productions = ctx.prods().map { prodsCtx ->
-            val prod = if (prodsCtx.prod().isEmpty()) {
+            var prod = if (prodsCtx.prod().isEmpty()) {
                 hasEPSprods = true
-                listOf(ProdElem.Term(EPS))
+                listOf(ExtendedElem.Casual(ProdElem.Term(EPS)))
             } else
                 prodsCtx.prod().map { prodCtx ->
                     if (prodCtx.NT_ID() != null) {
-                        ProdElem.NonTerm(
+                        ExtendedElem.Casual(ProdElem.NonTerm(
                                 prodCtx.NT_ID().text,
-                                prodCtx.args()?.CODE()?.map { it.text.cleanUpCode() }
-                        )
+                                prodCtx.args()?.arg()?.map { it.text.cleanUpCode() }
+                        ))
+                    } else if (prodCtx.T_ID() != null) {
+                        ExtendedElem.Casual(ProdElem.Term(prodCtx.T_ID().text))
                     } else {
-                        ProdElem.Term(prodCtx.T_ID().text)
+                        ExtendedElem.Code(prodCtx.CODE().text.cleanUpCode())
                     }
                 }
-            val code = prodsCtx.CODE()?.text?.cleanUpCode()
-            Production(prod, code)
+            var elems = prod.filterIsInstance<ExtendedElem.Casual>()
+            if (elems.isEmpty()) {
+                hasEPSprods = true
+                elems = listOf(ExtendedElem.Casual(ProdElem.Term(EPS)))
+                prod = elems + prod
+            }
+            Production(elems.map { it.elem }, prod)
         }
     }
 
