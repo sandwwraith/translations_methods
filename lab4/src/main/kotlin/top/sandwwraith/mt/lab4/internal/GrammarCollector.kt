@@ -10,7 +10,7 @@ import top.sandwwraith.mt.lab4.runtime.Token
  * 		  ITMO University, 2017
  **/
 
-internal class GrammarVisitor : GrammarBaseListener() {
+internal class GrammarCollector : GrammarBaseListener() {
     private var tokenCnt = 0
 
     internal val _tokenTable: MutableMap<String, Token> = LinkedHashMap()

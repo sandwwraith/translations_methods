@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import top.sandwwraith.mt.lab4.GrammarLexer
 import top.sandwwraith.mt.lab4.GrammarParser
-import top.sandwwraith.mt.lab4.internal.GrammarVisitor
+import top.sandwwraith.mt.lab4.internal.GrammarCollector
 import top.sandwwraith.mt.lab4.internal.LexerBuilder
 import java.io.StringReader
 
@@ -46,13 +46,13 @@ private fun haveText(text: List<String?>) = object : Matcher<Lexer> {
     }
 }
 
-private fun visitGrammar(gram: String): GrammarVisitor {
-    val visitor: GrammarVisitor = GrammarVisitor()
+private fun visitGrammar(gram: String): GrammarCollector {
+    val collector: GrammarCollector = GrammarCollector()
     val lexer = GrammarLexer(CharStreams.fromString(gram))
     val parser = GrammarParser(CommonTokenStream(lexer))
     val walker = ParseTreeWalker()
-    walker.walk(visitor, parser.file())
-    return visitor
+    walker.walk(collector, parser.file())
+    return collector
 }
 
 

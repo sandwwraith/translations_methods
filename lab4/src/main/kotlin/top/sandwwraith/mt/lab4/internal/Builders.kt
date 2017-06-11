@@ -2,13 +2,42 @@ package top.sandwwraith.mt.lab4.internal
 
 import top.sandwwraith.mt.lab4.runtime.Token
 
-internal class ParserBuilder(val visitor: GrammarVisitor) {
+abstract class BuilderHelper {
+
+    private var indent = 0
+
+    protected fun StringBuilder.l(line: String) {
+        for (i in 0 until (4 * indent)) append(" ")
+        append(line)
+        append(System.lineSeparator())
+    }
+
+    protected val StringBuilder.nl: Unit
+        get() {
+            append(System.lineSeparator())
+            Unit
+        }
+
+    protected fun scoped(block: () -> Unit) {
+        indent++
+        block()
+        indent--
+    }
+
+    protected fun StringBuilder.pop() {
+        var i = length - 1
+        while (this[i].isWhitespace() && i >= 0) i--
+        if (i >= 0) deleteCharAt(i)
+    }
+}
+
+internal class ParserBuilder(val collector: GrammarCollector) {
 
     val first: Map<String, Set<String>> by lazy {
         val fst: MutableMap<String, MutableSet<String>> = mutableMapOf()
 
-        visitor.terms.forEach { fst.put(it, mutableSetOf(it)) }
-        visitor._rules.forEach { (name, rule) ->
+        collector.terms.forEach { fst.put(it, mutableSetOf(it)) }
+        collector._rules.forEach { (name, rule) ->
             fst.put(name, mutableSetOf())
             if (rule.productions.any { it.first().name == EPS }) fst[name]!!.add(EPS)
         }
@@ -16,7 +45,7 @@ internal class ParserBuilder(val visitor: GrammarVisitor) {
         var changed = true
         while (changed) {
             changed = false
-            for ((name, rule) in visitor._rules) {
+            for ((name, rule) in collector._rules) {
                 for (prod in rule.productions) {
                     for (i in prod.indices) {
                         val curNT = prod[i].name
@@ -37,13 +66,13 @@ internal class ParserBuilder(val visitor: GrammarVisitor) {
     val follow: Map<String, Set<String>> by lazy {
         val flw: MutableMap<String, MutableSet<String>> = mutableMapOf()
 
-        visitor.nonTerms.forEach { flw.put(it, mutableSetOf()) }
-        flw.getValue(visitor.startNT).add(EOF)
+        collector.nonTerms.forEach { flw.put(it, mutableSetOf()) }
+        flw.getValue(collector.startNT).add(EOF)
 
         var changed = true
         while (changed) {
             changed = false
-            for ((name, rule) in visitor._rules) {
+            for ((name, rule) in collector._rules) {
                 rule.productions.forEach { prod ->
                     // For A -> aBb, add to FOLLOW(B) all from FIRST(b) except EPS
                     (0..prod.size - 2)
@@ -71,18 +100,49 @@ internal class ParserBuilder(val visitor: GrammarVisitor) {
     }
 }
 
-internal class LexerBuilder(val visitor: GrammarVisitor) {
+internal class LexerBuilder(val collector: GrammarCollector) : BuilderHelper() {
 
     val tokensToSkip: Set<Token>
-        get() = visitor._tokensToSkip
+        get() = collector._tokensToSkip
 
     val literals: Map<Token, String>
-        get() = visitor._literals
+        get() = collector._literals
 
     val patterns: Map<Token, Regex>
-        get() = visitor._patterns
+        get() = collector._patterns
 
     val tokenTable: Map<String, Token>
-        get() = visitor._tokenTable
+        get() = collector._tokenTable
+
+    fun generateLexerData(grammarName: String) = buildString {
+        collector.pckg?.let {
+            l("package $it")
+            nl
+        }
+        l("import java.io.Reader")
+        l("import top.sandwwraith.mt.lab4.runtime.Token")
+        l("import top.sandwwraith.mt.lab4.runtime.RuledLexer")
+        nl
+        l("private val _literals: Map<Token, String> = mapOf(")
+        scoped { literals.forEach { t, s -> l("$t to \"${s.escape()}\",") } }
+        pop()
+        l(")")
+        nl
+        l("private val _patterns: Map<Token, Regex> = mapOf(")
+        scoped { patterns.forEach { t, r -> l("$t to Regex(\"${r.toString().escape()}\"),") } }
+        pop()
+        l(")")
+        nl
+        l("private val _tokensToSkip = setOf(${tokensToSkip.joinToString()})")
+        nl
+        l("object TOKENS {")
+        scoped { (tokenTable - tokensToSkip).forEach { t, i -> l("val $t = $i") } }
+        l("}")
+        nl
+        l("class ${grammarName.capitalize()}Lexer(reader: Reader)")
+        scoped { l(": RuledLexer(reader, _literals, _patterns, _tokensToSkip, TOKENS.EOF)") }
+    }
+
+    private fun String.escape() = replace("\\", "\\\\").replace("\"", "\\\"")
 
 }
