@@ -1,0 +1,29 @@
+tasks.withType(Test) {
+    testLogging {
+        // set options for log level LIFECYCLE
+        events "standardOut"
+        showExceptions true
+        exceptionFormat "full"
+        showCauses true
+        showStackTraces true
+
+        afterTest { desc, result ->
+            println "${desc.className} ${desc.name} ==> ${result.resultType}"
+        }
+
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = '|  ', endItem = '  |'
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            }
+        }
+    }
+}
+
+
+dependencies {
+    testCompile 'io.kotlintest:kotlintest:2.0.3'
+    compile project(':lab4')
+}

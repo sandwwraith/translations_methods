@@ -1,0 +1,22 @@
++package top.sandwwraith.mt.lab4.examples.expr
+
+|> expr
+
+expr : Int := term exprs(term) { exprs } ;
+exprs <acc: Int> : Int := PLUS term { val next = acc + term } exprs(next) {exprs} | {acc} ;
+
+term : Int := factor terms(factor) {terms} ;
+terms <acc: Int> : Int := MUL factor terms({acc * factor}) {terms} | {acc} ;
+
+factor : Int := O expr C {expr} | num {num} ;
+num : Int := NUM numExp({NUM.toInt()}) {numExp} ;
+numExp <base: Int> : Int := EXP NUM { Math.pow(base.toDouble(), NUM.toDouble()).toInt() } | {base};
+
+EXP = "e";
+PLUS = "+";
+MUL = "*";
+O = "(";
+C = ")";
+NUM = '[0-9]+';
+
+WS => '\s+';

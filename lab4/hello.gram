@@ -1,0 +1,10 @@
++package top.sandwwraith.mt.lab4.examples.hello
+
+|> hello
+
+hello : String := HELLO a { ("Hello, " + a + "!").capitalize() };
+a : String := ID { ID };
+
+HELLO = "hello";
+ID = '[A-Z][a-z]*';
+WS => '\s+';
