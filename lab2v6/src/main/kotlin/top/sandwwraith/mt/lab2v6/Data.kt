@@ -26,12 +26,12 @@ data class TreeNode(val name: String, val children: List<TreeNode>, val term: Bo
 
     fun extractVars(): List<Pair<Int, String>> = when (this.name) {
         "V" -> {
-            if (children.size == 1) listOf(children[0].children[0].name)
-            if (children.size == 2 && children[0].name == "&") listOf(children[1].children[0].name)
-            children[1].extractVars()
+            if (children.size == 1) listOf(0 to children[0].children[0].name)
+            else if (children.size == 2 && children[0].name == "&") listOf(-1 to children[1].children[0].name)
+            else children[1].extractVars()
         }
         "X" -> {
-            var depth = 0
+            var depth = 1
             var c = this
             while (c.children.size == 2) {
                 depth++

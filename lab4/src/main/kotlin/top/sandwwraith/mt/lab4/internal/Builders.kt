@@ -127,6 +127,7 @@ internal class ParserGrammarFilesGenerator(val collector: GrammarCollector) : Ab
         l("import top.sandwwraith.mt.lab4.runtime.Token")
         l("import top.sandwwraith.mt.lab4.runtime.ParsingException")
         nl
+        l("@Suppress(\"UNUSED_VARIABLE\")")
         l("class ${gn}Parser(private val lexer: ${gn}Lexer) {")
         nl
         scoped {

@@ -8,12 +8,16 @@ exprs <acc: Int> : Int := PLUS term { val next = acc + term } exprs(next) {exprs
 term : Int := factor terms(factor) {terms} ;
 terms <acc: Int> : Int := MUL factor terms({acc * factor}) {terms} | {acc} ;
 
-factor : Int := O expr C {expr} | num {num} ;
+factor : Int := single factors(single) {factors};
+factors <acc: Int> : Int := DMUL single factors({Math.pow(single.toDouble(), acc.toDouble()).toInt()}) {factors} | {acc};
+
+single : Int := O expr C {expr} | num {num} ;
 num : Int := NUM numExp({NUM.toInt()}) {numExp} ;
 numExp <base: Int> : Int := EXP NUM { Math.pow(base.toDouble(), NUM.toDouble()).toInt() } | {base};
 
 EXP = "e";
 PLUS = "+";
+DMUL = "**";
 MUL = "*";
 O = "(";
 C = ")";

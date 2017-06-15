@@ -71,12 +71,15 @@ class RatNumTranslator : RatNumsBaseVisitor<String>() {
     }
 
     private fun StringBuilder.checkVar(v: String) {
-        if (v !in curContext.allocated) append(introduceVariable(v))
+        if (contextStack.asReversed().all { v !in it.allocated })
+            append(introduceVariable(v))
     }
 
     private fun deallocateVars(context: Context) = buildString {
-        al("mpq_clears(${context.allocated.joinToString()}, 0);")
-        context.allocated.clear()
+        if (context.allocated.size != 0) {
+            al("mpq_clears(${context.allocated.joinToString()}, 0);")
+            context.allocated.clear()
+        }
     }
 
     override fun visitRet(ctx: RatNumsParser.RetContext) = buildString {
@@ -179,6 +182,70 @@ class RatNumTranslator : RatNumsBaseVisitor<String>() {
         curContext.allocated.add(varname)
         al("${Constants.MPQ_TYPE} $varname;")
         al("mpq_init($varname);")
+    }
+
+    override fun visitIfCond(ctx: RatNumsParser.IfCondContext) = buildString {
+        al("if (${visitCond(ctx.cond())}) {")
+        newScope {
+            append(visitLines(ctx.lines(0)))
+            append(deallocateVars(curContext))
+        }
+        al("}")
+        if (ctx.lines().size > 1) {
+            al("else {")
+            newScope {
+                append(visitLines(ctx.lines(1)))
+                append(deallocateVars(curContext))
+            }
+            al("}")
+        }
+    }
+
+    override fun visitWhileCond(ctx: RatNumsParser.WhileCondContext) = buildString {
+        al("while (${visitCond(ctx.cond())}) {")
+        newScope {
+            append(visitLines(ctx.lines()))
+            append(deallocateVars(curContext))
+        }
+        al("}")
+    }
+
+    override fun visitCond(ctx: RatNumsParser.CondContext): String {
+        if (ctx.childCount == 1) return visitAndd(ctx.andd())
+        else return "(${visitCond(ctx.cond())} || ${visitAndd(ctx.andd())})"
+    }
+
+    override fun visitAndd(ctx: RatNumsParser.AnddContext): String {
+        if (ctx.childCount == 1) return visitComps(ctx.comps())
+        else return "(${visitAndd(ctx.andd())} && ${visitComps(ctx.comps())})"
+    }
+
+    override fun visitCompEq(ctx: RatNumsParser.CompEqContext): String {
+        return "(mpq_equal(${ctx.ID(0)}, ${ctx.ID(1)}) != 0)"
+    }
+
+    override fun visitCompLt(ctx: RatNumsParser.CompLtContext): String {
+        return "(mpq_cmp(${ctx.ID(0)}, ${ctx.ID(1)}) < 0)"
+    }
+
+    override fun visitCompLte(ctx: RatNumsParser.CompLteContext): String {
+        return "(mpq_cmp(${ctx.ID(0)}, ${ctx.ID(1)}) <= 0)"
+    }
+
+    override fun visitCompGt(ctx: RatNumsParser.CompGtContext): String {
+        return "(mpq_cmp(${ctx.ID(0)}, ${ctx.ID(1)}) > 0)"
+    }
+
+    override fun visitCompGte(ctx: RatNumsParser.CompGteContext): String {
+        return "(mpq_cmp(${ctx.ID(0)}, ${ctx.ID(1)}) >= 0)"
+    }
+
+    override fun visitCompNe(ctx: RatNumsParser.CompNeContext): String {
+        return "(mpq_equal(${ctx.ID(0)}, ${ctx.ID(1)}) == 0)"
+    }
+
+    override fun visitCompBrackets(ctx: RatNumsParser.CompBracketsContext): String {
+        return "(${visitCond(ctx.cond())})"
     }
 }
 

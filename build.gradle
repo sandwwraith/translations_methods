@@ -15,7 +15,6 @@ subprojects {
     version '1.0-SNAPSHOT'
 
     apply plugin: 'kotlin'
-    apply plugin: 'application'
 
     repositories {
         mavenCentral()
@@ -26,4 +25,8 @@ subprojects {
     }
 }
 
-defaultTasks 'clean', 'lab3v7:generateGrammarSource', 'installDist'
+configure(subprojects - project(":lab4:examples")) {
+    apply plugin: 'application'
+}
+
+defaultTasks 'clean', 'lab3v7:generateGrammarSource', 'lab4:generateGrammarSource', 'installDist'

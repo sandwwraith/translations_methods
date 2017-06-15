@@ -22,11 +22,11 @@ class ParserTest : ShouldSpec() {
                 types should haveSize(1)
                 types[0] shouldBe "int"
             }
-            /*should("have variables a, **b, d") {
+            should("have variables a, **b, d") {
                 val vars = tree.extractVars()
                 vars should haveSize(3)
                 vars shouldBe listOf(0 to "a", 2 to "b", 0 to "d")
-            }*/
+            }
         }
 
         val testString2 = "int a;char *c;\ndouble **x, **y;"
@@ -36,11 +36,11 @@ class ParserTest : ShouldSpec() {
                 val types = tree.takeTypes()
                 types shouldBe listOf("int", "char", "double")
             }
-            /*should("have all variables") {
+            should("have all variables") {
                 val vars = tree.extractVars()
                 vars should haveSize(4)
                 vars shouldBe listOf(0 to "a", 1 to "c", 2 to "x", 2 to "y")
-            }*/
+            }
         }
 
         "Parsing broken string" {
@@ -58,12 +58,12 @@ class ParserTest : ShouldSpec() {
                 val types = tree.takeTypes()
                 types shouldBe listOf("int", "double", "char")
             }
-            /*should("have all variables") {
+            should("have all variables") {
                 val vars = tree.extractVars()
                 vars should haveSize(4)
-                vars shouldBe listOf(1 to "a", 2 to "b", 0 to "x", 3 to "C")
-            }*/
-            should("not allow amps") {
+                vars shouldBe listOf(-1 to "a", 2 to "b", 0 to "x", 3 to "C")
+            }
+            should("not allow multiple amps or amps with asterisks") {
                 shouldThrow<ParsingException> { Parser(Lexer("int &&k;")).parse()  }
                 shouldThrow<ParsingException> { Parser(Lexer("int &*k;")).parse()  }
                 shouldThrow<ParsingException> { Parser(Lexer("int &;")).parse()  }

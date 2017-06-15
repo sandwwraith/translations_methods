@@ -37,6 +37,9 @@ class ExamplesTester : WordSpec() {
             "eval '(2e3 * 3e2 + 10) * 2'" {
                 eval("(2e3 * 3e2 + 10) * 2") shouldBe (((2 * 2 * 2) * (3 * 3) + 10) * 2)
             }
+            "eval '2 ** 3 ** 2 * 3'" {
+                eval("2 ** 3 ** 2 * 3 + 3") shouldBe 1539
+            }
         }
     }
 }
